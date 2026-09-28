@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>📊 Dashboard — Analyse des résultats data.gouv.fr</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@gouvfr/dsfr@1.11.2/dist/dsfr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@gouvfr/dsfr@1.11.2/dist/utility/utility.min.css">
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --blue-france:#000091;
+  --blue-france-hi:#1212ff;
+  --blue-france-soft:#e3e3fd;
+  --red-marianne:#E1000F;
+  --red-marianne-soft:#ffe9e9;
+  --white:#ffffff;
+  --grey-50:#f6f6f6;
+  --grey-100:#eeeeee;
+  --grey-200:#e5e5e5;
+  --grey-500:#929292;
+  --grey-700:#3a3a3a;
+  --grey-900:#1e1e1e;
+  --green-bourgeon:#18753c;
+  --green-emeraude:#00a95f;
+  --yellow-tournesol:#ffb800;
+  --purple:#a855f7;
+  --orange:#ff6b00;
+  --font-mono:'SF Mono',Menlo,Consolas,'Courier New',monospace;
+  --font-sans:'Marianne','system-ui',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+}
+
+html{height:100%}
+body{
+  font-family:var(--font-sans);
+  background:var(--grey-50);
+  color:var(--grey-900);
+  font-size:13px;line-height:1.5;
+  min-height:100%;overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:var(--grey-100)}
+::-webkit-scrollbar-thumb{background:var(--grey-500);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:var(--blue-france)}
+
+.marianne-band{
+  height:6px;
+  background:linear-gradient(to right,
+    var(--blue-france) 0%, var(--blue-france) 33.33%,
+    var(--white) 33.33%, var(--white) 66.66%,
+    var(--red-marianne) 66.66%, var(--red-marianne) 100%);
+}
+
+.bloc-marque{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 16px;background:var(--white);
+  border-bottom:1px solid var(--grey-200);
+}
+.bloc-marque-logo{
+  font-weight:700;font-size:13px;line-height:1.15;
+  color:var(--grey-900);letter-spacing:0.3px;
+  text-transform:uppercase;
+  border-right:1px solid var(--grey-200);
+  padding-right:12px;
+}
+.bloc-marque-devise{
+  font-size:10px;font-weight:400;color:var(--grey-700);
+  line-height:1.3;letter-spacing:0.5px;
+}
+.bloc-marque-devise em{
+  display:block;font-style:normal;
+  text-transform:uppercase;letter-spacing:1.2px;
+  font-size:9px;color:var(--grey-500);
+}
+
+.topbar{
+  background:var(--white);
+  border-bottom:1px solid var(--grey-200);
+  display:flex;align-items:center;
+  padding:12px 16px;gap:14px;
+  position:sticky;top:6px;z-index:100;
+  flex-wrap:wrap;
+  box-shadow:0 2px 6px rgba(0,0,0,0.04);
+}
+.brand{
+  font-size:15px;font-weight:700;
+  color:var(--blue-france);letter-spacing:0.3px;
+  display:flex;align-items:center;gap:8px;
+  white-space:nowrap;
+}
+.brand .dot{
+  width:10px;height:10px;border-radius:50%;
+  background:var(--green-emeraude);
+  box-shadow:0 0 0 3px rgba(0,169,95,0.2);
+  animation:pulse 1.8s infinite;flex-shrink:0;
+}
+@keyframes pulse{
+  0%,100%{opacity:1;transform:scale(1)}
+  50%{opacity:0.5;transform:scale(0.85)}
+}
+
+.search-mini{
+  display:flex;gap:6px;align-items:center;
+  margin-left:auto;
+}
+.search-mini input{
+  background:var(--white);
+  border:1px solid var(--grey-200);
+  border-radius:4px;color:var(--grey-900);
+  padding:8px 12px;font-size:13px;
+  font-family:var(--font-sans);
+  min-width:220px;
+}
+.search-mini input:focus{
+  outline:none;border-color:var(--blue-france);
+  box-shadow:0 0 0 2px var(--blue-france-soft);
+}
+.search-mini button{
+  background:var(--blue-france);color:var(--white);
+  border:none;font-size:12px;font-weight:700;
+  padding:8px 14px;border-radius:4px;
+  cursor:pointer;transition:all 0.15s;
+}
+.search-mini button:hover{background:var(--blue-france-hi)}
+
+.dashboard{
+  max-width:1600px;
+  margin:0 auto;
+  padding:20px 16px 60px;
+}
+
+.kpi-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
+  gap:14px;
+  margin-bottom:22px;
+}
+.kpi{
+  background:var(--white);
+  border:1px solid var(--grey-200);
+  border-radius:6px;
+  padding:16px 18px;
+  border-left:4px solid var(--blue-france);
+  transition:all 0.15s;
+}
+.kpi:hover{
+  transform:translateY(-2px);
+  box-shadow:0 4px 14px rgba(0,0,145,0.08);
+}
+.kpi.api{border-left-color:var(--green-emeraude)}
+.kpi.pop{border-left-color:var(--yellow-tournesol)}
+.kpi.quality{border-left-color:var(--purple)}
+.kpi.warn{border-left-color:var(--red-marianne)}
+.kpi .label{
+  font-size:11px;font-weight:700;
+  color:var(--grey-500);
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+  margin-bottom:6px;
+}
+.kpi .value{
+  font-size:28px;font-weight:700;
+  color:var(--blue-france);
+  line-height:1.1;
+  font-family:var(--font-mono);
+}
+.kpi .value.green{color:var(--green-bourgeon)}
+.kpi .value.amber{color:#8a5e00}
+.kpi .value.red{color:var(--red-marianne)}
+.kpi .value.purple{color:var(--purple)}
+.kpi .sub{
+  font-size:11px;color:var(--grey-500);
+  margin-top:4px;
+}
+
+.section{
+  background:var(--white);
+  border:1px solid var(--grey-200);
+  border-radius:6px;
+  margin-bottom:18px;
+  overflow:hidden;
+  position:relative;
+}
+.section-head{
+  padding:12px 16px;
+  background:var(--grey-50);
+  border-bottom:1px solid var(--grey-200);
+  font-size:12px;font-weight:700;
+  color:var(--blue-france);
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+  display:flex;align-items:center;gap:8px;
+}
+.section-head::before{
+  content:'';width:4px;height:14px;
+  background:var(--red-marianne);
+}
+.section-head .export-btn{
+  margin-left:auto;
+  background:var(--white);
+  border:1px solid var(--grey-200);
+  color:var(--grey-700);
+  font-size:10px;font-weight:700;
+  padding:4px 10px;
+  border-radius:4px;
+  cursor:pointer;
+  transition:all 0.15s;
+  text-transform:uppercase;
+  letter-spacing:0.3px;
+}
+.section-head .export-btn:hover{
+  background:var(--blue-france);
+  color:var(--white);
+  border-color:var(--blue-france);
+}
+.section-body{padding:16px}
+
+/* Filtres actifs */
+.active-filters{
+  background:var(--blue-france-soft);
+  border:1px solid var(--blue-france);
+  border-radius:6px;
+  padding:10px 14px;
+  margin-bottom:18px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.active-filters .label{
+  font-size:11px;
+  font-weight:700;
+  color:var(--blue-france);
+  text-transform:uppercase;
+}
+.filter-chip{
+  background:var(--blue-france);
+  color:var(--white);
+  font-size:11px;
+  font-weight:600;
+  padding:4px 10px;
+  border-radius:999px;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  transition:all 0.15s;
+}
+.filter-chip:hover{
+  background:var(--red-marianne);
+}
+.filter-clear{
+  margin-left:auto;
+  background:transparent;
+  border:1px solid var(--blue-france);
+  color:var(--blue-france);
+  font-size:11px;
+  font-weight:700;
+  padding:4px 10px;
+  border-radius:4px;
+  cursor:pointer;
+  transition:all 0.15s;
+}
+.filter-clear:hover{
+  background:var(--blue-france);
+  color:var(--white);
+}
+
+.grid-2{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+  margin-bottom:18px;
+}
+@media(max-width:900px){.grid-2{grid-template-columns:1fr}}
+
+.bar-chart{display:flex;flex-direction:column;gap:10px}
+.bar-row{
+  display:grid;
+  grid-template-columns:200px 1fr 70px;
+  align-items:center;
+  gap:10px;
+  cursor:pointer;
+  padding:2px 4px;
+  border-radius:4px;
+  transition:background 0.15s;
+}
+.bar-row:hover{background:var(--blue-france-soft)}
+.bar-row.filtered{background:var(--blue-france-soft);outline:1px solid var(--blue-france)}
+.bar-label{
+  font-size:12px;font-weight:600;
+  color:var(--grey-900);
+  overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.bar-track{
+  background:var(--grey-100);
+  height:22px;
+  border-radius:4px;
+  overflow:hidden;
+  position:relative;
+}
+.bar-fill{
+  height:100%;
+  background:linear-gradient(90deg,var(--blue-france),var(--blue-france-hi));
+  border-radius:4px;
+  transition:width 0.4s;
+  min-width:2px;
+}
+.bar-fill.green{background:linear-gradient(90deg,var(--green-bourgeon),var(--green-emeraude))}
+.bar-fill.amber{background:linear-gradient(90deg,#8a5e00,var(--yellow-tournesol))}
+.bar-fill.purple{background:linear-gradient(90deg,#6b21a8,var(--purple))}
+.bar-value{
+  font-family:var(--font-mono);font-size:12px;
+  font-weight:700;color:var(--grey-700);
+  text-align:right;
+}
+
+.donut-wrap{
+  display:flex;
+  align-items:center;
+  gap:24px;
+  flex-wrap:wrap;
+}
+.donut{
+  width:180px;height:180px;
+  border-radius:50%;
+  position:relative;
+  flex-shrink:0;
+}
+.donut::after{
+  content:'';
+  position:absolute;
+  inset:28%;
+  background:var(--white);
+  border-radius:50%;
+  box-shadow:inset 0 0 0 1px var(--grey-200);
+}
+.donut-center{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  z-index:2;
+}
+.donut-center .v{
+  font-family:var(--font-mono);font-size:22px;
+  font-weight:700;color:var(--blue-france);
+  line-height:1;
+}
+.donut-center .l{
+  font-size:9px;color:var(--grey-500);
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+  margin-top:3px;
+}
+.donut-legend{
+  flex:1;min-width:180px;
+  display:flex;flex-direction:column;gap:8px;
+}
+.legend-item{
+  display:flex;align-items:center;gap:8px;
+  font-size:12px;
+  padding:4px 6px;
+  border-radius:4px;
+  cursor:pointer;
+  transition:background 0.15s;
+}
+.legend-item:hover{background:var(--blue-france-soft)}
+.legend-item.filtered{background:var(--blue-france-soft);outline:1px solid var(--blue-france)}
+.legend-dot{
+  width:12px;height:12px;border-radius:3px;
+  flex-shrink:0;
+}
+.legend-label{flex:1;color:var(--grey-700)}
+.legend-value{
+  font-family:var(--font-mono);
+  font-weight:700;color:var(--grey-900);
+}
+
+.timeline{display:flex;flex-direction:column;gap:12px}
+.timeline-row{
+  display:grid;
+  grid-template-columns:100px 1fr 60px;
+  align-items:center;
+  gap:10px;
+  font-size:12px;
+  cursor:pointer;
+  padding:2px 4px;
+  border-radius:4px;
+  transition:background 0.15s;
+}
+.timeline-row:hover{background:var(--blue-france-soft)}
+.timeline-row.filtered{background:var(--blue-france-soft);outline:1px solid var(--blue-france)}
+.timeline-year{
+  font-family:var(--font-mono);
+  font-weight:700;color:var(--grey-700);
+}
+.timeline-track{
+  background:var(--grey-100);
+  height:26px;
+  border-radius:4px;
+  overflow:hidden;
+  position:relative;
+}
+.timeline-fill{
+  height:100%;
+  background:linear-gradient(90deg,var(--blue-france),var(--blue-france-hi));
+  border-radius:4px;
+  transition:width 0.4s;
+  display:flex;align-items:center;
+  padding-left:10px;
+  color:var(--white);
+  font-size:10px;font-weight:700;
+  font-family:var(--font-mono);
+  min-width:30px;
+}
+.timeline-value{
+  text-align:right;
+  font-family:var(--font-mono);
+  font-weight:700;color:var(--grey-700);
+}
+
+.tags-cloud{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:center;
+  justify-content:center;
+  padding:12px 0;
+}
+.tag-bubble{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  padding:6px 12px;
+  border-radius:999px;
+  background:var(--blue-france-soft);
+  color:var(--blue-france);
+  font-weight:600;
+  border:1px solid transparent;
+  transition:all 0.15s;
+  cursor:pointer;
+}
+.tag-bubble:hover{
+  border-color:var(--blue-france);
+  transform:scale(1.05);
+}
+.tag-bubble.filtered{
+  background:var(--blue-france);
+  color:var(--white);
+}
+.tag-bubble.size-1{font-size:11px;opacity:0.75}
+.tag-bubble.size-2{font-size:12px;opacity:0.85}
+.tag-bubble.size-3{font-size:14px;opacity:0.95}
+.tag-bubble.size-4{font-size:16px;font-weight:700}
+.tag-bubble.size-5{font-size:19px;font-weight:700;background:var(--blue-france);color:var(--white)}
+.tag-bubble .count{
+  font-family:var(--font-mono);
+  font-size:9px;
+  opacity:0.75;
+  margin-left:2px;
+}
+
+.top-list{display:flex;flex-direction:column;gap:8px}
+.top-item{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  background:var(--grey-50);
+  border-radius:4px;
+  border-left:3px solid var(--blue-france);
+  transition:all 0.15s;
+}
+.top-item:hover{
+  background:var(--blue-france-soft);
+  transform:translateX(2px);
+}
+.top-item.duplicate{
+  border-left-color:var(--purple);
+  background:#f9f5ff;
+}
+.top-rank{
+  font-family:var(--font-mono);
+  font-size:14px;font-weight:700;
+  color:var(--blue-france);
+  min-width:28px;
+  text-align:center;
+}
+.top-content{flex:1;min-width:0}
+.top-title{
+  font-size:12px;font-weight:700;
+  color:var(--grey-900);
+  overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.top-title a{color:inherit;text-decoration:none}
+.top-title a:hover{color:var(--blue-france);text-decoration:underline}
+.top-meta{
+  font-size:10px;color:var(--grey-500);
+  margin-top:2px;
+  overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.top-badges{
+  display:flex;
+  gap:4px;
+  flex-shrink:0;
+}
+.top-badge{
+  font-family:var(--font-mono);
+  font-size:9px;
+  font-weight:700;
+  padding:2px 6px;
+  border-radius:3px;
+  text-transform:uppercase;
+}
+.top-badge.dup{background:var(--purple);color:var(--white)}
+.top-badge.quality-high{background:var(--green-emeraude);color:var(--white)}
+.top-badge.quality-mid{background:var(--yellow-tournesol);color:var(--grey-900)}
+.top-badge.quality-low{background:var(--grey-200);color:var(--grey-700)}
+.top-score{
+  font-family:var(--font-mono);
+  font-size:13px;font-weight:700;
+  color:var(--yellow-tournesol);
+  background:var(--grey-900);
+  padding:3px 8px;
+  border-radius:4px;
+  flex-shrink:0;
+}
+
+/* Doublons */
+.duplicates-list{
+  display:flex;flex-direction:column;gap:12px;
+}
+.duplicate-group{
+  background:var(--grey-50);
+  border-left:3px solid var(--purple);
+  border-radius:4px;
+  padding:10px 14px;
+}
+.duplicate-group .group-title{
+  font-size:12px;font-weight:700;
+  color:var(--purple);
+  margin-bottom:6px;
+}
+.duplicate-group .group-items{
+  display:flex;flex-direction:column;gap:4px;
+  font-size:11px;
+}
+.duplicate-group .group-item{
+  display:flex;justify-content:space-between;
+  gap:8px;
+  padding:3px 0;
+}
+.duplicate-group .group-item a{
+  color:var(--grey-900);
+  text-decoration:none;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.duplicate-group .group-item a:hover{
+  color:var(--blue-france);
+  text-decoration:underline;
+}
+.duplicate-group .group-source{
+  font-family:var(--font-mono);
+  font-size:10px;
+  color:var(--grey-500);
+  flex-shrink:0;
+}
+
+.errors-list{
+  display:flex;flex-direction:column;gap:6px;
+  font-family:var(--font-mono);font-size:11px;
+}
+.error-item{
+  background:var(--red-marianne-soft);
+  border-left:3px solid var(--red-marianne);
+  padding:8px 12px;
+  border-radius:4px;
+  color:var(--red-marianne);
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.empty{
+  text-align:center;
+  padding:60px 20px;
+  color:var(--grey-500);
+}
+.empty .ico{font-size:48px;margin-bottom:14px}
+.empty .title{
+  font-size:16px;font-weight:700;
+  color:var(--grey-900);margin-bottom:8px;
+}
+
+.toast{
+  position:fixed;
+  bottom:24px;
+  left:50%;
+  transform:translateX(-50%) translateY(100px);
+  background:var(--grey-900);
+  color:var(--white);
+  padding:12px 20px;
+  border-radius:6px;
+  font-size:13px;
+  font-weight:600;
+  box-shadow:0 8px 24px rgba(0,0,0,0.2);
+  transition:transform 0.3s;
+  z-index:9999;
+}
+.toast.show{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="marianne-band"></div>
+
+<div class="bloc-marque">
+  <div class="bloc-marque-logo">République<br>Française</div>
+  <div class="bloc-marque-devise">
+    <em>Liberté</em>
+    <em>Égalité</em>
+    <em>Fraternité</em>
+  </div>
+</div>
+
+<div class="topbar">
+  <div class="brand">
+    <span class="dot"></span>
+    DASHBOARD
+    <span style="color:var(--grey-500);font-weight:400;font-size:12px;font-family:var(--font-mono)">/ analyse data.gouv.fr</span>
+  </div>
+  <div class="search-mini">
+    <input type="text" id="queryInput" placeholder="🔍 Nouvelle analyse…" value="france renov'">
+    <button id="analyzeBtn">▶ ANALYSER</button>
+  </div>
+</div>
+
+<div class="dashboard" id="dashboard">
+  <div class="empty">
+    <div class="ico">📊</div>
+    <div class="title">Dashboard d'analyse</div>
+    <div>Lance une analyse pour visualiser les résultats.</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API_BASE = localStorage.getItem('meta_api_base') || 'http://localhost:8001';
+
+/* ============================================================
+   ÉTAT
+   ============================================================ */
+const state = {
+  query: '',
+  allResults: [],      // tous les résultats bruts
+  results: [],         // résultats filtrés
+  errors: [],
+  total: 0,
+  loading: false,
+  filters: {
+    type: null,
+    source: null,
+    org: null,
+    year: null,
+    tag: null
+  },
+  duplicates: []       // groupes de doublons détectés
+};
+
+/* ============================================================
+   UTILITAIRES
+   ============================================================ */
+function escapeHtml(s){
+  return String(s ?? '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+function formatNumber(n){
+  return (n || 0).toLocaleString('fr-FR');
+}
+
+function showToast(message){
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+/* ============================================================
+   DÉTECTION DE DOUBLONS
+   ============================================================ */
+function detectDuplicates(results){
+  // Groupe par titre normalisé (lowercase, sans accents, sans ponctuation)
+  const groups = new Map();
+  for (const r of results){
+    const key = (r.titre || r.id || '')
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/g, '')
+      .slice(0, 60);
+    if (!key) continue;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(r);
+  }
+
+  // Ne garder que les groupes avec plusieurs entrées de sources différentes
+  const duplicates = [];
+  for (const [key, items] of groups){
+    const sources = new Set(items.map(i => i.source));
+    if (items.length > 1 && sources.size > 1){
+      duplicates.push({
+        key,
+        titre: items[0].titre,
+        items
+      });
+    }
+  }
+
+  return duplicates.slice(0, 20);
+}
+
+function getDuplicateIds(results){
+  const dupIds = new Set();
+  for (const group of state.duplicates){
+    for (const item of group.items){
+      dupIds.add(item.id);
+    }
+  }
+  return dupIds;
+}
+
+/* ============================================================
+   SCORE DE QUALITÉ
+   ============================================================ */
+function computeQuality(item){
+  // Basé sur les métriques v2 uniquement
+  const m = item.metrics || {};
+  if (!item.metrics) return null;   // v1 n'a pas de métriques
+
+  const views = m.views || 0;
+  const downloads = m.resources_downloads || 0;
+  const reuses = m.reuses || 0;
+  const followers = m.followers || 0;
+  const discussions = m.discussions || 0;
+
+  // Score composite sur 100
+  // - Views : max 40 pts (log scale)
+  // - Downloads : max 25 pts (log scale)
+  // - Reuses : max 20 pts (log scale)
+  // - Followers : max 10 pts (log scale)
+  // - Discussions : max 5 pts (indicateur d'engagement)
+  const logScore = (v, max) => {
+    if (v <= 0) return 0;
+    return Math.min(max, (Math.log10(v + 1) / 6) * max);
+  };
+
+  const score =
+    logScore(views, 40) +
+    logScore(downloads, 25) +
+    logScore(reuses, 20) +
+    logScore(followers, 10) +
+    logScore(discussions, 5);
+
+  return {
+    score: Math.round(score),
+    views, downloads, reuses, followers, discussions,
+    label: score >= 70 ? 'high' : score >= 40 ? 'mid' : 'low'
+  };
+}
+
+/* ============================================================
+   FILTRES
+   ============================================================ */
+function hasActiveFilters(){
+  return Object.values(state.filters).some(v => v !== null);
+}
+
+function applyFilters(){
+  let results = state.allResults;
+
+  if (state.filters.type){
+    results = results.filter(r => r.type === state.filters.type);
+  }
+  if (state.filters.source){
+    results = results.filter(r => r.source === state.filters.source);
+  }
+  if (state.filters.org){
+    results = results.filter(r => (r.organisation || 'Sans organisation') === state.filters.org);
+  }
+  if (state.filters.year){
+    results = results.filter(r => (r.last_update || '').slice(0, 4) === state.filters.year);
+  }
+  if (state.filters.tag){
+    results = results.filter(r => (r.tags || []).includes(state.filters.tag));
+  }
+
+  state.results = results;
+}
+
+function setFilter(kind, value){
+  // Toggle : si on reclique sur le même filtre, on le retire
+  if (state.filters[kind] === value){
+    state.filters[kind] = null;
+  } else {
+    state.filters[kind] = value;
+  }
+  applyFilters();
+  renderDashboard();
+}
+
+function clearFilters(){
+  state.filters = { type: null, source: null, org: null, year: null, tag: null };
+  applyFilters();
+  renderDashboard();
+}
+
+/* ============================================================
+   AGRÉGATION
+   ============================================================ */
+function analyzeData(results){
+  const analysis = {
+    total: results.length,
+    byType: {},
+    bySource: {},
+    byOrg: {},
+    byYear: {},
+    byTag: {},
+    withPopularity: 0,
+    totalPopularity: 0,
+    topByPopularity: [],
+    topByQuality: [],
+    avgDescriptionLength: 0,
+  };
+
+  let totalDescLen = 0;
+
+  for (const r of results){
+    const t = r.type || 'dataset';
+    analysis.byType[t] = (analysis.byType[t] || 0) + 1;
+
+    const s = r.source || 'inconnue';
+    analysis.bySource[s] = (analysis.bySource[s] || 0) + 1;
+
+    const o = r.organisation || 'Sans organisation';
+    analysis.byOrg[o] = (analysis.byOrg[o] || 0) + 1;
+
+    if (r.last_update){
+      const year = r.last_update.slice(0, 4);
+      if (/^\d{4}$/.test(year)){
+        analysis.byYear[year] = (analysis.byYear[year] || 0) + 1;
+      }
+    }
+
+    for (const tag of (r.tags || [])){
+      analysis.byTag[tag] = (analysis.byTag[tag] || 0) + 1;
+    }
+
+    if (typeof r.popularity === 'number' && r.popularity > 0){
+      analysis.withPopularity++;
+      analysis.totalPopularity += r.popularity;
+      analysis.topByPopularity.push(r);
+    }
+
+    const quality = computeQuality(r);
+    if (quality){
+      analysis.topByQuality.push({ ...r, quality });
+    }
+
+    totalDescLen += (r.description || '').length;
+  }
+
+  analysis.avgDescriptionLength = analysis.total > 0
+    ? Math.round(totalDescLen / analysis.total)
+    : 0;
+
+  analysis.topByPopularity.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+  analysis.topByPopularity = analysis.topByPopularity.slice(0, 10);
+
+  analysis.topByQuality.sort((a, b) => b.quality.score - a.quality.score);
+  analysis.topByQuality = analysis.topByQuality.slice(0, 10);
+
+  return analysis;
+}
+
+/* ============================================================
+   GRAPHIQUES
+   ============================================================ */
+function renderBarChart(data, options = {}){
+  const { colorClass = '', maxItems = 10, filterKind = null } = options;
+  const entries = Object.entries(data)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, maxItems);
+
+  if (!entries.length){
+    return '<div style="text-align:center;color:var(--grey-500);padding:16px">Aucune donnée</div>';
+  }
+
+  const max = Math.max(...entries.map(([, v]) => v));
+  const activeFilter = filterKind ? state.filters[filterKind] : null;
+
+  return `
+    <div class="bar-chart">
+      ${entries.map(([label, value]) => {
+        const pct = (value / max) * 100;
+        const filtered = activeFilter === label ? 'filtered' : '';
+        const clickable = filterKind ? `data-filter-kind="${filterKind}" data-filter-value="${escapeHtml(label)}"` : '';
+        return `
+          <div class="bar-row ${filtered}" ${clickable}>
+            <span class="bar-label" title="${escapeHtml(label)}">${escapeHtml(label)}</span>
+            <div class="bar-track">
+              <div class="bar-fill ${colorClass}" style="width:${pct}%"></div>
+            </div>
+            <span class="bar-value">${formatNumber(value)}</span>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function renderDonut(data, options = {}){
+  const { colors = ['#000091', '#1212ff', '#00a95f', '#ffb800', '#E1000F', '#a855f7', '#ff6b00'], filterKind = null } = options;
+  const entries = Object.entries(data).sort((a, b) => b[1] - a[1]);
+
+  if (!entries.length){
+    return '<div style="text-align:center;color:var(--grey-500);padding:16px">Aucune donnée</div>';
+  }
+
+  const total = entries.reduce((s, [, v]) => s + v, 0);
+  const activeFilter = filterKind ? state.filters[filterKind] : null;
+
+  let cumulative = 0;
+  const stops = entries.map(([label, value], i) => {
+    const start = cumulative;
+    const end = cumulative + (value / total) * 100;
+    cumulative = end;
+    const color = colors[i % colors.length];
+    return `${color} ${start}% ${end}%`;
+  }).join(', ');
+
+  return `
+    <div class="donut-wrap">
+      <div class="donut" style="background:conic-gradient(${stops})">
+        <div class="donut-center">
+          <span class="v">${formatNumber(total)}</span>
+          <span class="l">total</span>
+        </div>
+      </div>
+      <div class="donut-legend">
+        ${entries.map(([label, value], i) => {
+          const pct = ((value / total) * 100).toFixed(1);
+          const color = colors[i % colors.length];
+          const filtered = activeFilter === label ? 'filtered' : '';
+          const clickable = filterKind ? `data-filter-kind="${filterKind}" data-filter-value="${escapeHtml(label)}"` : '';
+          return `
+            <div class="legend-item ${filtered}" ${clickable}>
+              <span class="legend-dot" style="background:${color}"></span>
+              <span class="legend-label">${escapeHtml(label)}</span>
+              <span class="legend-value">${formatNumber(value)} · ${pct}%</span>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderTimeline(byYear){
+  const entries = Object.entries(byYear).sort((a, b) => a[0].localeCompare(b[0]));
+  if (!entries.length){
+    return '<div style="text-align:center;color:var(--grey-500);padding:16px">Aucune date disponible</div>';
+  }
+  const max = Math.max(...entries.map(([, v]) => v));
+  const activeFilter = state.filters.year;
+
+  return `
+    <div class="timeline">
+      ${entries.map(([year, count]) => {
+        const pct = (count / max) * 100;
+        const filtered = activeFilter === year ? 'filtered' : '';
+        return `
+          <div class="timeline-row ${filtered}" data-filter-kind="year" data-filter-value="${year}">
+            <span class="timeline-year">${year}</span>
+            <div class="timeline-track">
+              <div class="timeline-fill" style="width:${pct}%">${count}</div>
+            </div>
+            <span class="timeline-value">${formatNumber(count)}</span>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function renderTagsCloud(byTag){
+  const entries = Object.entries(byTag)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 30);
+
+  if (!entries.length){
+    return '<div style="text-align:center;color:var(--grey-500);padding:16px">Aucun tag</div>';
+  }
+
+  const max = Math.max(...entries.map(([, v]) => v));
+  const min = Math.min(...entries.map(([, v]) => v));
+  const activeFilter = state.filters.tag;
+
+  return `
+    <div class="tags-cloud">
+      ${entries.map(([tag, count]) => {
+        const norm = max === min ? 3 : Math.round(((count - min) / (max - min)) * 4) + 1;
+        const filtered = activeFilter === tag ? 'filtered' : '';
+        return `
+          <span class="tag-bubble size-${norm} ${filtered}"
+                data-filter-kind="tag" data-filter-value="${escapeHtml(tag)}"
+                title="${escapeHtml(tag)} — ${count} occurrences">
+            ${escapeHtml(tag)}
+            <span class="count">${count}</span>
+          </span>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function renderTopByPopularity(items){
+  if (!items.length){
+    return '<div style="text-align:center;color:var(--grey-500);padding:16px">Aucune donnée de popularité</div>';
+  }
+  const dupIds = getDuplicateIds();
+
+  return `
+    <div class="top-list">
+      ${items.map((item, i) => {
+        const isDup = dupIds.has(item.id);
+        return `
+          <div class="top-item ${isDup ? 'duplicate' : ''}">
+            <span class="top-rank">#${i + 1}</span>
+            <div class="top-content">
+              <div class="top-title">
+                <a href="${escapeHtml(item.url || '#')}" target="_blank" rel="noopener">
+                  ${escapeHtml(item.titre || item.id)}
+                </a>
+              </div>
+              <div class="top-meta">
+                ${escapeHtml(item.organisation || 'Sans organisation')}
+                · ${escapeHtml(item.source)}
+                · ${escapeHtml(item.type)}
+              </div>
+            </div>
+            <div class="top-badges">
+              ${isDup ? '<span class="top-badge dup">doublon</span>' : ''}
+            </div>
+            <span class="top-score">★ ${formatNumber(item.popularity)}</span>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function renderTopByQuality(items){
+  if (!items.length){
+    return '<div style="text-align:center;color:var(--grey-500);padding:16px">Aucune métrique de qualité disponible</div>';
+  }
+
+  return `
+    <div class="top-list">
+      ${items.map((item, i) => {
+        const q = item.quality;
+        const badgeClass = q.label === 'high' ? 'quality-high' : q.label === 'mid' ? 'quality-mid' : 'quality-low';
+        const label = q.label === 'high' ? 'excellent' : q.label === 'mid' ? 'moyen' : 'faible';
+        return `
+          <div class="top-item">
+            <span class="top-rank">#${i + 1}</span>
+            <div class="top-content">
+              <div class="top-title">
+                <a href="${escapeHtml(item.url || '#')}" target="_blank" rel="noopener">
+                  ${escapeHtml(item.titre || item.id)}
+                </a>
+              </div>
+              <div class="top-meta">
+                👁 ${formatNumber(q.views)} vues
+                · ⬇ ${formatNumber(q.downloads)} téléchargements
+                · ♻ ${formatNumber(q.reuses)} réutilisations
+                · ★ ${formatNumber(q.followers)} abonnés
+              </div>
+            </div>
+            <div class="top-badges">
+              <span class="top-badge ${badgeClass}">${label}</span>
+            </div>
+            <span class="top-score">${q.score}</span>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function renderDuplicates(){
+  if (!state.duplicates.length){
+    return '<div style="text-align:center;color:var(--grey-500);padding:16px">Aucun doublon détecté 🎉</div>';
+  }
+
+  return `
+    <div class="duplicates-list">
+      ${state.duplicates.map(group => `
+        <div class="duplicate-group">
+          <div class="group-title">
+            🔁 ${escapeHtml(group.titre || group.key)} — ${group.items.length} occurrences
+          </div>
+          <div class="group-items">
+            ${group.items.map(item => `
+              <div class="group-item">
+                <a href="${escapeHtml(item.url || '#')}" target="_blank" rel="noopener">
+                  ${escapeHtml(item.titre || item.id)}
+                </a>
+                <span class="group-source">${escapeHtml(item.source)}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+/* ============================================================
+   FILTRES ACTIFS
+   ============================================================ */
+function renderActiveFilters(){
+  if (!hasActiveFilters()) return '';
+
+  const chips = [];
+  const labels = {
+    type: 'Type',
+    source: 'Source',
+    org: 'Organisation',
+    year: 'Année',
+    tag: 'Tag'
+  };
+
+  for (const [kind, value] of Object.entries(state.filters)){
+    if (value !== null){
+      chips.push({
+        kind,
+        value,
+        label: `${labels[kind]}: ${value}`
+      });
+    }
+  }
+
+  return `
+    <div class="active-filters">
+      <span class="label">🔍 Filtres actifs :</span>
+      ${chips.map(c => `
+        <span class="filter-chip" data-remove-kind="${c.kind}">
+          ${escapeHtml(c.label)} ✕
+        </span>
+      `).join('')}
+      <button class="filter-clear" id="clearFiltersBtn">Tout effacer</button>
+    </div>
+  `;
+}
+
+/* ============================================================
+   RENDU DU DASHBOARD
+   ============================================================ */
+function renderDashboard(){
+  const { results, errors, query, total } = state;
+  const analysis = analyzeData(results);
+
+  const dash = document.getElementById('dashboard');
+
+  if (!state.allResults.length){
+    dash.innerHTML = `
+      <div class="empty">
+        <div class="ico">🔍</div>
+        <div class="title">Aucun résultat</div>
+        <div>Aucune donnée à analyser pour « ${escapeHtml(query)} ».</div>
+      </div>
+    `;
+    return;
+  }
+
+  const datasets = analysis.byType['dataset'] || 0;
+  const apis = analysis.byType['dataservice'] || 0;
+  const avgPop = analysis.withPopularity > 0
+    ? Math.round(analysis.totalPopularity / analysis.withPopularity)
+    : 0;
+  const avgQuality = analysis.topByQuality.length > 0
+    ? Math.round(analysis.topByQuality.reduce((s, x) => s + x.quality.score, 0) / analysis.topByQuality.length)
+    : 0;
+
+  dash.innerHTML = `
+    ${renderActiveFilters()}
+
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="label">Requête</div>
+        <div class="value" style="font-size:18px">${escapeHtml(query)}</div>
+        <div class="sub">Total backend : ${formatNumber(total)}</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Résultats affichés</div>
+        <div class="value">${formatNumber(analysis.total)}</div>
+        <div class="sub">${hasActiveFilters() ? 'Filtrés' : 'Tous'}</div>
+      </div>
+      <div class="kpi api">
+        <div class="label">APIs</div>
+        <div class="value green">${formatNumber(apis)}</div>
+        <div class="sub">${apis > 0 ? Math.round((apis / analysis.total) * 100) : 0}% du total</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Datasets</div>
+        <div class="value">${formatNumber(datasets)}</div>
+        <div class="sub">${datasets > 0 ? Math.round((datasets / analysis.total) * 100) : 0}% du total</div>
+      </div>
+      <div class="kpi pop">
+        <div class="label">Pop. moyenne</div>
+        <div class="value amber">${formatNumber(avgPop)}</div>
+        <div class="sub">${formatNumber(analysis.withPopularity)} avec métriques</div>
+      </div>
+      <div class="kpi quality">
+        <div class="label">Qualité moyenne</div>
+        <div class="value purple">${avgQuality} / 100</div>
+        <div class="sub">${analysis.topByQuality.length} évalués</div>
+      </div>
+      <div class="kpi ${errors.length ? 'warn' : ''}">
+        <div class="label">Erreurs sources</div>
+        <div class="value ${errors.length ? 'red' : 'green'}">${errors.length}</div>
+        <div class="sub">${errors.length ? 'Certaines sources ont échoué' : 'Toutes OK'}</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Doublons</div>
+        <div class="value">${state.duplicates.length}</div>
+        <div class="sub">Groupes détectés</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="section" data-export-name="type">
+        <div class="section-head">
+          Répartition par type
+          <button class="export-btn" data-export-target="type">📷 PNG</button>
+        </div>
+        <div class="section-body">
+          ${renderDonut(analysis.byType, { colors: ['#000091', '#00a95f', '#ffb800'], filterKind: 'type' })}
+        </div>
+      </div>
+      <div class="section" data-export-name="source">
+        <div class="section-head">
+          Répartition par source
+          <button class="export-btn" data-export-target="source">📷 PNG</button>
+        </div>
+        <div class="section-body">
+          ${renderDonut(analysis.bySource, { colors: ['#000091', '#1212ff', '#00a95f', '#ffb800'], filterKind: 'source' })}
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="section" data-export-name="organisations">
+        <div class="section-head">
+          Top 10 organisations
+          <button class="export-btn" data-export-target="organisations">📷 PNG</button>
+        </div>
+        <div class="section-body">
+          ${renderBarChart(analysis.byOrg, { maxItems: 10, filterKind: 'org' })}
+        </div>
+      </div>
+      <div class="section" data-export-name="tags">
+        <div class="section-head">
+          Top 10 tags
+          <button class="export-btn" data-export-target="tags">📷 PNG</button>
+        </div>
+        <div class="section-body">
+          ${renderBarChart(analysis.byTag, { maxItems: 10, colorClass: 'green', filterKind: 'tag' })}
+        </div>
+      </div>
+    </div>
+
+    <div class="section" data-export-name="timeline">
+      <div class="section-head">
+        Distribution par année
+        <button class="export-btn" data-export-target="timeline">📷 PNG</button>
+      </div>
+      <div class="section-body">
+        ${renderTimeline(analysis.byYear)}
+      </div>
+    </div>
+
+    <div class="section" data-export-name="nuage-tags">
+      <div class="section-head">
+        Nuage de tags (top 30)
+        <button class="export-btn" data-export-target="nuage-tags">📷 PNG</button>
+      </div>
+      <div class="section-body">
+        ${renderTagsCloud(analysis.byTag)}
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="section" data-export-name="top-popularite">
+        <div class="section-head">
+          Top 10 popularité
+          <button class="export-btn" data-export-target="top-popularite">📷 PNG</button>
+        </div>
+        <div class="section-body">
+          ${renderTopByPopularity(analysis.topByPopularity)}
+        </div>
+      </div>
+      <div class="section" data-export-name="top-qualite">
+        <div class="section-head">
+          Top 10 qualité (score /100)
+          <button class="export-btn" data-export-target="top-qualite">📷 PNG</button>
+        </div>
+        <div class="section-body">
+          ${renderTopByQuality(analysis.topByQuality)}
+        </div>
+      </div>
+    </div>
+
+    <div class="section" data-export-name="doublons">
+      <div class="section-head">
+        🔁 Doublons détectés (${state.duplicates.length})
+        <button class="export-btn" data-export-target="doublons">📷 PNG</button>
+      </div>
+      <div class="section-body">
+        ${renderDuplicates()}
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">📊 Statistiques descriptives</div>
+      <div class="section-body">
+        <div class="kpi-grid" style="margin-bottom:0">
+          <div class="kpi">
+            <div class="label">Organisations distinctes</div>
+            <div class="value">${formatNumber(Object.keys(analysis.byOrg).length)}</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Tags distincts</div>
+            <div class="value">${formatNumber(Object.keys(analysis.byTag).length)}</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Années couvertes</div>
+            <div class="value">${formatNumber(Object.keys(analysis.byYear).length)}</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Longueur desc. moy.</div>
+            <div class="value">${formatNumber(analysis.avgDescriptionLength)}</div>
+            <div class="sub">caractères</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    ${errors.length ? `
+      <div class="section">
+        <div class="section-head" style="color:var(--red-marianne)">⚠️ Erreurs sources (${errors.length})</div>
+        <div class="section-body">
+          <div class="errors-list">
+            ${errors.map(e => `<div class="error-item">${escapeHtml(e)}</div>`).join('')}
+          </div>
+        </div>
+      </div>
+    ` : ''}
+  `;
+
+  // Bind des filtres
+  document.querySelectorAll('[data-filter-kind]').forEach(el => {
+    el.addEventListener('click', () => {
+      const kind = el.dataset.filterKind;
+      const value = el.dataset.filterValue;
+      setFilter(kind, value);
+    });
+  });
+
+  // Bind des chips de retrait
+  document.querySelectorAll('[data-remove-kind]').forEach(el => {
+    el.addEventListener('click', () => {
+      const kind = el.dataset.removeKind;
+      state.filters[kind] = null;
+      applyFilters();
+      renderDashboard();
+    });
+  });
+
+  // Bind du bouton "tout effacer"
+  const clearBtn = document.getElementById('clearFiltersBtn');
+  if (clearBtn){
+    clearBtn.addEventListener('click', clearFilters);
+  }
+
+  // Bind des boutons d'export PNG
+  document.querySelectorAll('[data-export-target]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const target = btn.dataset.exportTarget;
+      const section = btn.closest('.section');
+      if (!section) return;
+
+      btn.textContent = '⏳...';
+      btn.disabled = true;
+
+      try {
+        const canvas = await html2canvas(section, {
+          backgroundColor: '#ffffff',
+          scale: 2,
+          logging: false
+        });
+        const link = document.createElement('a');
+        link.download = `${state.query.replace(/[^a-z0-9]/gi, '_')}_${target}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showToast('📷 PNG exporté');
+      } catch (err){
+        showToast('❌ Erreur export : ' + err.message);
+      } finally {
+        btn.textContent = '📷 PNG';
+        btn.disabled = false;
+      }
+    });
+  });
+}
+
+/* ============================================================
+   CHARGEMENT DES DONNÉES
+   ============================================================ */
+async function fetchAllResults(query){
+  const PAGE_SIZE = 50;
+  const MAX_PAGES = 10;
+  const allResults = [];
+  const seenIds = new Set();
+  const allErrors = [];
+  let backendTotal = 0;
+
+  for (let page = 1; page <= MAX_PAGES; page++){
+    const url = new URL(`${API_BASE}/search`);
+    url.searchParams.set('q', query);
+    url.searchParams.set('page', page);
+    url.searchParams.set('page_size', PAGE_SIZE);
+    url.searchParams.set('sort', 'relevance');
+    url.searchParams.set('type', 'all');
+
+    try {
+      const r = await fetch(url.toString());
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const data = await r.json();
+
+      if (page === 1){
+        backendTotal = data.count || 0;
+      }
+
+      const pageResults = data.results || [];
+      for (const item of pageResults){
+        if (item.id && !seenIds.has(item.id)){
+          seenIds.add(item.id);
+          allResults.push(item);
+        }
+      }
+
+      if (data.errors && data.errors.length){
+        allErrors.push(...data.errors);
+      }
+
+      if (pageResults.length < PAGE_SIZE) break;
+    } catch(err){
+      allErrors.push(`Page ${page}: ${err.message}`);
+      break;
+    }
+  }
+
+  return { results: allResults, errors: allErrors, total: backendTotal };
+}
+
+/* ============================================================
+   ANALYSE
+   ============================================================ */
+async function analyze(){
+  const q = document.getElementById('queryInput').value.trim();
+  if (!q) return;
+
+  state.query = q;
+  state.loading = true;
+  state.filters = { type: null, source: null, org: null, year: null, tag: null };
+
+  const dash = document.getElementById('dashboard');
+  dash.innerHTML = `
+    <div class="empty">
+      <div class="ico" style="animation:pulse 1s infinite">⏳</div>
+      <div class="title">Analyse en cours…</div>
+      <div>Agrégation des résultats pour « ${escapeHtml(q)} »</div>
+    </div>
+  `;
+
+  try {
+    const data = await fetchAllResults(q);
+    state.allResults = data.results;
+    state.results = data.results;
+    state.errors = data.errors;
+    state.total = data.total;
+    state.duplicates = detectDuplicates(data.results);
+    renderDashboard();
+    showToast(`✅ ${state.results.length} résultats analysés`);
+  } catch(err){
+    dash.innerHTML = `
+      <div class="empty">
+        <div class="ico">❌</div>
+        <div class="title">Erreur d'analyse</div>
+        <div>${escapeHtml(err.message)}</div>
+        <div style="margin-top:14px;font-size:12px;color:var(--grey-500)">
+          Vérifie que le backend uvicorn tourne sur <code>${API_BASE}</code>
+        </div>
+      </div>
+    `;
+  } finally {
+    state.loading = false;
+  }
+}
+
+/* ============================================================
+   ÉVÉNEMENTS
+   ============================================================ */
+document.getElementById('analyzeBtn').addEventListener('click', analyze);
+document.getElementById('queryInput').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') analyze();
+});
+
+/* ============================================================
+   INIT
+   ============================================================ */
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(analyze, 100);
+});
+</script>
+</body>
+</html>
