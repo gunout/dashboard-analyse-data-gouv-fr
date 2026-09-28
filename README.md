@@ -35,13 +35,15 @@ L'interface suit la **charte Marianne** (DSFR) avec bandeau tricolore et bloc-ma
 
 ### Vue d'ensemble du dashboard
 
-<img src="https://github.com/user-attachments/assets/c5ea1588-2198-4b83-908b-24dd8fdaf4ca" alt="Dashboard analyse data.gouv.fr" width="800">
+<img width="1644" height="2636" alt="Screenshot 2026-09-28 at 19-40-41 📊 Dashboard — Analyse des résultats data gouv fr" src="https://github.com/user-attachments/assets/98beaa82-b189-4977-8de5-70a3ec666cee" />
+
 
 *Analyse d'une requête avec KPI, graphiques et filtres interactifs.*
 
 ### Détail des graphiques
 
-<img src="https://github.com/user-attachments/assets/063fb24f-0ff1-4ab0-b10f-d4f6b1558a7b" alt="Graphiques du dashboard" width="800">
+<img width="1644" height="2636" alt="Screenshot 2026-09-28 at 19-47-42 📊 Dashboard — Analyse des résultats data gouv fr" src="https://github.com/user-attachments/assets/9293a4cc-985a-4680-81c9-533bb4cb68a5" />
+
 
 *Donuts interactifs, bar charts cliquables et nuage de tags.*
 
